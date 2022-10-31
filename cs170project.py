@@ -18,7 +18,7 @@ def main():
         print("Welcome to my 8-Puzzle Solver. Type '1' to use a default puzzle, or '2' to create your own, or 0 to quit")
         choice = int( input() )
         if choice == 1:
-            problem = [[1, 2, 3], [4, 0, 6], [7, 5, 8]]
+            problem = [[1, 3, 6], [5, 0, 2], [4, 7, 8]]
             choice = 0
         elif choice == 2:
             print("Enter your puzzle, using a zero to represent the blank.")
@@ -48,22 +48,30 @@ def generalsearch(problem, qfunct):
     global NUM_NODES
     NUM_NODES = 0
     hn = 0
-    if qfunct == 2:
-        hn = misplaced(problem)
-    if (qfunct == 3):
-        hn = manhattan(problem)
 
     makenode = make_node(problem)
-    makenode.hn = hn
     nodes = make_queue(makenode)
     visited = make_queue(makenode)
     nodenum = 0
     while True:
+        #this was a problem for the NUM_NODES, used this link to help me out with sorting the vector:
+        #to show that i didn't just copy it, I'll explain it here:
+        #when you zip the two lists, they get merged into a list of tuples. 
+        #so for example, {1, 2, 3} and {'a', 'b', 'c'} zipped would become {{1, a}, {2, b}, {3, c}}
+        #then, it creates a new resulting array based on the zipped array
+        #this new array that is stored, is then separated and then now the nodes array is stored properly.
+        #https://stackoverflow.com/questions/6618515/sorting-list-based-on-values-from-another-list
+        if qfunct != 1:
+            weights = []
+            for newnode in nodes:
+                weight = newnode.depth + newnode.hn
+                weights.append(weight)
+            nodes = [x for _, x in sorted(zip(weights, nodes), key=lambda pair: pair[0])]
+
         if len(nodes) == 0:
             return "failure"
         nodenum += 1
         node = nodes.pop(0)
-        # NUM_NODES += 1
         if goal(node):
             print('Total number of nodes expanded: ' + str(NUM_NODES))
             print('Depth of the node in the tree was: ' + str(node.depth))
@@ -74,13 +82,18 @@ def generalsearch(problem, qfunct):
         expanded = expand(node, visited, qfunct)
         
         for childnode in expanded:
-            if childnode not in visited:
-                childnode.depth = node.depth + 1
-                nodes.append(childnode)
-                visited.append(childnode.problem)
-                # NUM_NODES += 1
-            else:
-                expanded.pop(childnode)
+            if qfunct == 2:
+                hn = misplaced(childnode.problem)
+            if (qfunct == 3):
+                hn = manhattan(childnode.problem)
+            childnode.depth = node.depth + 1
+            childnode.hn = hn
+            node.expanded += 1
+            nodes.append(childnode)
+            visited.append(childnode.problem)
+            NUM_NODES += 1
+        # else:
+        #     expanded.pop(childnode)
 
 def expand(node, visited, qfunct):
     global NUM_NODES
@@ -140,8 +153,9 @@ def expand(node, visited, qfunct):
         if move_right_node.problem not in visited:
             children.append(move_right_node)
 
-    if len(children) != 0:
-        NUM_NODES += 1
+    # if len(children) != 0:
+    #     NUM_NODES += 1
+    # NUM_NODES += len(children)
     return children
 
 
@@ -214,6 +228,8 @@ class Node:
         self.hn = 0
         self.depth = 0
         self.problem = problem
+        self.flag = False
+        self.expanded = 0
 
 
 
