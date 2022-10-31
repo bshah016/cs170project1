@@ -1,8 +1,14 @@
 
 #define your solution states here
+import queue
+import copy
+from shutil import move
+
+
 EIGHT = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
 FIFTEEN = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 0]]
 FIFTEEN = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15], [16, 17, 18, 19, 20], [21, 22, 23, 24, 0]]
+NUM_NODES = 0
 
 
 def main():
@@ -12,7 +18,8 @@ def main():
         print("Welcome to my 8-Puzzle Solver. Type '1' to use a default puzzle, or '2' to create your own, or 0 to quit")
         choice = int( input() )
         if choice == 1:
-            problem = [1, 2, 3, 4, 5, 6, 0, 7, 8]
+            problem = [[1, 2, 3], [4, 0, 6], [7, 5, 8]]
+            choice = 0
         elif choice == 2:
             print("Enter your puzzle, using a zero to represent the blank.")
             print("Please only enter valid 8-puzzles.")
@@ -28,28 +35,131 @@ def main():
             thirdRow.split(' ')
 
             problem = [firstRow, secondRow, thirdRow]
-
+            choice = 0
         else:
             print("Please enter a valid choice")
 
+    # print(problem)
     algNum = input(print("Select algorithm. (1) for Uniform Cost Search, (2) for the Misplaced Tile Heuristic, or (3) the Manhattan Distance Heuristic"))
     qfunct = int( algNum )
-    generalsearch(problem, qfunct)
+    print(generalsearch(problem, qfunct))
 
 def generalsearch(problem, qfunct):
+    global NUM_NODES
+    NUM_NODES = 0
+    hn = 0
+    if qfunct == 2:
+        hn = misplaced(problem)
+    if (qfunct == 3):
+        hn = manhattan(problem)
 
-    while goal(problem) == False:
-        if qfunct == 1:
-            problem = misplaced(problem)
-        if (qfunct == 2):
-            problem = manhattan(problem)
-        if qfunct == 0:
-            problem = uniform(problem)
-        print(problem)
-        if goal(problem):
-            print("Goal state found!")
+    makenode = make_node(problem)
+    makenode.hn = hn
+    nodes = make_queue(makenode)
+    visited = make_queue(makenode)
+    nodenum = 0
+    while True:
+        if len(nodes) == 0:
+            return "failure"
+        nodenum += 1
+        node = nodes.pop(0)
+        # NUM_NODES += 1
+        if goal(node):
+            print('Total number of nodes expanded: ' + str(NUM_NODES))
+            print('Depth of the node in the tree was: ' + str(node.depth))
+            return "Success"
+            # return node
+        if NUM_NODES != 0:
+            print('State to expand has a g(n) of ' + str(node.depth) + ', an h(n) of ' + str(node.hn) + '.\n And it looks like: \n' + str(node.problem))
+        expanded = expand(node, visited, qfunct)
+        
+        for childnode in expanded:
+            if childnode not in visited:
+                childnode.depth = node.depth + 1
+                nodes.append(childnode)
+                visited.append(childnode.problem)
+                # NUM_NODES += 1
+            else:
+                expanded.pop(childnode)
+
+def expand(node, visited, qfunct):
+    global NUM_NODES
+    children = []
+    x = 0
+    y = 0
+    for i in range(len(node.problem)):
+        for j in range(len(node.problem)):
+            if int(node.problem[i][j]) == 0:
+                x = i
+                y = j
+    #only operators are moving the 0 up, down, left right
+    hn = 0
+    if qfunct == 2:
+        hn = misplaced(node.problem)
+    if (qfunct == 3):
+        hn = manhattan(node.problem)
+    
+    if x > 0: #not on top row, so we can move it up
+        move_up = copy.deepcopy(node.problem)
+        temp = move_up[x][y] #save the original value
+        move_up[x][y] = move_up[x - 1][y] #decrement x value by 1 to signal that the space moved up
+        move_up[x - 1][y] = temp #swap the values
+        move_up_node = Node(move_up)
+        move_up_node.hn = hn
+        move_up_node.depth += 1
+        if move_up_node.problem not in visited:
+            children.append(move_up_node)
+    if x < len(node.problem) - 1: #not on bottom row, so we can move it down
+        move_down = copy.deepcopy(node.problem)
+        temp = move_down[x][y]
+        move_down[x][y] = move_down[x+1][y]
+        move_down[x+1][y] = temp
+        move_down_node = Node(move_down)
+        move_down_node.hn = hn
+        move_down_node.depth += 1
+        if move_down_node.problem not in visited:
+            children.append(move_down_node)
+    if y > 0:
+        move_left = copy.deepcopy(node.problem)
+        temp = move_left[x][y]
+        move_left[x][y] = move_left[x][y-1]
+        move_left[x][y-1] = temp
+        move_left_node = Node(move_left)
+        move_left_node.hn = hn
+        move_left_node.depth += 1
+        if move_left_node.problem not in visited:
+            children.append(move_left_node)
+    if y < len(node.problem) - 1:
+        move_right = copy.deepcopy(node.problem)
+        temp = move_right[x][y]
+        move_right[x][y] = move_right[x][y+1]
+        move_right[x][y+1] = temp
+        move_right_node = Node(move_right)
+        move_right_node.hn = hn
+        move_right_node.depth += 1
+        if move_right_node.problem not in visited:
+            children.append(move_right_node)
+
+    if len(children) != 0:
+        NUM_NODES += 1
+    return children
+
+
+
+def make_node(problem):
+    return Node(problem)
+
+def make_queue(node):
+    pq = []
+    pq.append(node)
+    return pq
+
+def remove_front(pq):
+    x = pq.pop(0)
+    return x
 
 def manhattan(problem):
+    global EIGHT
     goalstate = EIGHT #choose your goal state from the global variables
     manhattandist = 0
     x = 0
@@ -76,24 +186,35 @@ def manhattan(problem):
 
 
 def misplaced(problem):
+    global EIGHT
     goalstate = EIGHT #choose your goal state from the global variables
     num_misplaced = 0
 
     for i in range(len(problem)):
         for j in range(len(problem)):
-            if problem[i][j] != goalstate [i][j] and problem[i][j] != 0:
+            if int(problem[i][j]) != int(goalstate[i][j]) and int(problem[i][j]) != 0:
                 num_misplaced = num_misplaced + 1
     return num_misplaced
+
+def uniform(problem):
+    return 0
     
 
-def goal(problem):
+def goal(node):
+    global EIGHT
     goalstate = EIGHT #change this depending on what type of puzzle you have
-    if problem == goalstate:
+    if node.problem == goalstate:
         return True
     else:
         return False
 
     
+class Node:
+    def __init__ (self, problem):
+        self.hn = 0
+        self.depth = 0
+        self.problem = problem
+
 
 
 main()
