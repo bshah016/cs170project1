@@ -1,4 +1,3 @@
-
 #https://docs.python.org/3/howto/sorting.html
 #https://docs.python.org/3/library/functions.html#zip
 #^ Used these as a reference, but they didn't seem too useful compared to what I found on stack overflow
@@ -8,21 +7,33 @@
 #define your solution states here
 import queue
 import copy
+import collections
 from shutil import move
+#https://towardsdatascience.com/prettify-your-terminal-text-with-termcolor-and-pyfiglet-880de83fda6b
 import pyfiglet
+#https://pypi.org/project/termcolor/
 from termcolor import colored
+import time
+from datetime import datetime
 
-
+#global variables for the goal states
 EIGHT = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
 FIFTEEN = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 0]]
 FIFTEEN = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15], [16, 17, 18, 19, 20], [21, 22, 23, 24, 0]]
+
 NUM_NODES = 0
 
 
+
+#A lot of this code is similar to the interface given in the assignment pdf
+# I tried to make it more unique by addings ome custom styling and whatnot
+# But as far as the way the starting of the puzzle is concerned,
+# I give credit to Eamonn Keogh (and if it's a real example, the person that wrote the report)
+# for the print statements and my inspiration for them in main()
 def main():
     choice = 5
     problem = []
-    while choice != 0:
+    while int(choice) != 0:
         # result = pyfiglet.figlet_format("My  8\nPuzzle\nSolver", font = "doh", width = 5000)
         result = pyfiglet.figlet_format("My  8", font = "banner3-D")
         print(colored(result, 'blue'))
@@ -31,11 +42,11 @@ def main():
         result = pyfiglet.figlet_format("Solver", font = "banner3-D")
         print(colored(result, 'yellow'))
         print("\nType: \n(1) to use a default puzzle \n(2) to create your own \n(0) to quit\nChoice: ")
-        choice = int( input() )
-        if choice == 1:
-            problem = [[0, 1, 3], [4, 2, 5], [7, 8, 6]]
+        choice = input()
+        if int(choice) == 1:
+            problem = [[1, 2, 3], [4, 5, 6], [7, 0, 8]]
             choice = 0
-        elif choice == 2:
+        elif int(choice) == 2:
             print("------------------------------------------------------------\n")
             print("Enter your puzzle, using a zero to represent the blank.\n")
             print("Please only enter valid 8-puzzles.\n")
@@ -74,6 +85,10 @@ def main():
     qfunct = int( algNum )
     print(generalsearch(problem, qfunct))
 
+#most of the code here was inspired by the starter code given on the first page of the pdf, but I did do some things differently
+#for instance, if we do reach a goal, we do not return node, instead we print out node's info, as I think that is more useful
+# It also seemed that in expanded, we wanted to update the node count and parent node accordingly,
+# but I couldn't figure out how to do that, so I just did it using a new children array
 def generalsearch(problem, qfunct):
     global NUM_NODES
     NUM_NODES = 0
@@ -83,15 +98,24 @@ def generalsearch(problem, qfunct):
     nodes = make_queue(makenode)
     visited = make_queue(makenode)
     nodenum = 0
+    queue = 1
+    max_queue = 1
+    #for the timestamps used here and in the goal state code block, I used:
+    # https://pynative.com/python-get-time-difference/
+    #and
+    # https://www.geeksforgeeks.org/get-current-timestamp-using-python/
+    first = datetime.now()
     while True:
+        #https://www.geeksforgeeks.org/get-current-timestamp-using-python/
+        #^Used this to figure out how to get time stamps for duration of program
         #this was a problem for the NUM_NODES, used this link to help me out with sorting the vector:
-        #to show that i didn't just copy it, I'll explain it here:
+        #to show that i didn't just copy it and I do understand it, I'll explain it here:
         #when you zip the two lists, they get merged into a list of tuples. 
         #so for example, {1, 2, 3} and {'a', 'b', 'c'} zipped would become {{1, a}, {2, b}, {3, c}}
         #then, it creates a new resulting array based on the zipped array
         #this new array that is stored, is then separated and then now the nodes array is stored properly.
         #https://stackoverflow.com/questions/6618515/sorting-list-based-on-values-from-another-list
-        if qfunct != 1:
+        if qfunct > 1:
             weights = []
             for newnode in nodes:
                 weight = newnode.depth + newnode.hn
@@ -101,12 +125,26 @@ def generalsearch(problem, qfunct):
         if len(nodes) == 0:
             return "failure"
         nodenum += 1
-        node = nodes.pop(0)
-        if goal(node):
+        node = nodes[0]
+        # used this for some help on how to do this:
+        # https://stackoverflow.com/questions/627435/how-to-remove-an-element-from-a-list-by-index
+        nodes.pop(0)
+        queue -= 1
+        if goal_test(node):
+            second = datetime.now()
+            time = second - first
             print('State to expand has a g(n) of ' + str(node.depth) + ', an h(n) of ' + str(node.hn) + '.\n And it looks like: \n')
             drawBoard(node.problem)
             print('\nTotal number of nodes expanded: ' + str(NUM_NODES))
             print('Depth of the node in the tree was: ' + str(node.depth))
+            if time.total_seconds() < 0.1:
+                diff = 'less than a tenth of a second'
+            else:
+                #for rounding, so we don't get spurious precision, I used this as a reference:
+                #https://www.w3schools.com/python/ref_func_round.asp
+                diff = 'approximately ' + str(round(int(time.total_seconds()), 3)) + ' seconds'
+            print('Time it took to complete was: ' + diff)
+            print('Max queue size was: ' + str(max_queue) + ' nodes')
             return "Success"
             # return node
         # if NUM_NODES != 0:
@@ -117,6 +155,7 @@ def generalsearch(problem, qfunct):
         expanded = expand(node, visited, qfunct)
         
         for childnode in expanded:
+            queue += 1
             if qfunct == 2:
                 hn = misplaced(childnode.problem)
             if (qfunct == 3):
@@ -129,17 +168,15 @@ def generalsearch(problem, qfunct):
             NUM_NODES += 1
         # else:
         #     expanded.pop(childnode)
+        if queue > max_queue:
+            max_queue = queue
+        queue += 1
+        max_queue += 1
 
 def expand(node, visited, qfunct):
-    global NUM_NODES
+    # global NUM_NODES
     children = []
-    x = 0
-    y = 0
-    for i in range(len(node.problem)):
-        for j in range(len(node.problem)):
-            if int(node.problem[i][j]) == 0:
-                x = i
-                y = j
+    [x, y] = find_zero(node.problem)
     #only operators are moving the 0 up, down, left right
     hn = 0
     if qfunct == 2:
@@ -196,6 +233,13 @@ def expand(node, visited, qfunct):
     return children
 
 
+def find_zero(problem):
+    for i in range(len(problem)):
+        for j in range(len(problem)):
+            if int(problem[i][j]) == 0:
+                x = i
+                y = j
+    return [x, y]
 
 def make_node(problem):
     return Node(problem)
@@ -222,6 +266,7 @@ def manhattan(problem):
     #calculating current position for each value, then retrieving goal state's value
     #using the formula from the link, adds the abs value of actual - expected for each x and y coordinate
     #re sums that into the manhattan distance calculation
+    
     for a in range(1, 9): #have to change this range if you change the type of puzzle. For 15 puzzle, would have to be 1 to 16, for 24 puzzle, would have to be 1 to 25, etc
         for i in range(len(problem)):
             for j in range(len(problem)):
@@ -243,14 +288,18 @@ def misplaced(problem):
 
     for i in range(len(problem)):
         for j in range(len(problem)):
-            if int(problem[i][j]) != int(goalstate[i][j]) and int(problem[i][j]) != 0:
+            if int(problem[i][j]) != int(goalstate[i][j]) and int(problem[i][j]) != 0: #realized you have to exclude 0, because it will never be in the "correct" place unless it is solved
                 num_misplaced = num_misplaced + 1
     return num_misplaced
     
 
-def goal(node):
+def goal_test(node):
     global EIGHT
     goalstate = EIGHT #change this depending on what type of puzzle you have
+    # for row in range(len(node.problem)):
+    #     if collections.Counter(node.problem[row]) != collections.Counter(goalstate[row]):
+    #         return False
+    # return True
     if node.problem == goalstate:
         return True
     else:
