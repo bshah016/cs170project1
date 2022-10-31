@@ -13,7 +13,6 @@ from shutil import move
 import pyfiglet
 #https://pypi.org/project/termcolor/
 from termcolor import colored
-import time
 from datetime import datetime
 
 #global variables for the goal states
@@ -44,7 +43,7 @@ def main():
         print("\nType: \n(1) to use a default puzzle \n(2) to create your own \n(0) to quit\nChoice: ")
         choice = input()
         if int(choice) == 1:
-            problem = [[1, 2, 3], [4, 5, 6], [7, 0, 8]]
+            problem = [[0, 7, 2], [4, 6, 1], [3, 5, 8]]
             choice = 0
         elif int(choice) == 2:
             print("------------------------------------------------------------\n")
@@ -142,7 +141,7 @@ def generalsearch(problem, qfunct):
             else:
                 #for rounding, so we don't get spurious precision, I used this as a reference:
                 #https://www.w3schools.com/python/ref_func_round.asp
-                diff = 'approximately ' + str(round(int(time.total_seconds()), 3)) + ' seconds'
+                diff = 'approximately ' + str(round(time.total_seconds(), 1)) + ' seconds'
             print('Time it took to complete was: ' + diff)
             print('Max queue size was: ' + str(max_queue) + ' nodes')
             return "Success"
@@ -171,7 +170,7 @@ def generalsearch(problem, qfunct):
         if queue > max_queue:
             max_queue = queue
         queue += 1
-        max_queue += 1
+        max_queue = len(nodes)
 
 def expand(node, visited, qfunct):
     # global NUM_NODES
@@ -288,7 +287,7 @@ def misplaced(problem):
 
     for i in range(len(problem)):
         for j in range(len(problem)):
-            if int(problem[i][j]) != int(goalstate[i][j]) and int(problem[i][j]) != 0: #realized you have to exclude 0, because it will never be in the "correct" place unless it is solved
+            if int(problem[i][j]) != int(goalstate[i][j]) and int(problem[i][j]) != 0: #realized you have to exclude 0, because it will never be in the "incorrect", it is not even a tile
                 num_misplaced = num_misplaced + 1
     return num_misplaced
     
