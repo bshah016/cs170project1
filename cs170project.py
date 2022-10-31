@@ -40,10 +40,12 @@ def main():
         print(colored(result, 'green'))
         result = pyfiglet.figlet_format("Solver", font = "banner3-D")
         print(colored(result, 'yellow'))
+        result = pyfiglet.figlet_format(":-)", font = "banner3-D")
+        print(colored(result, 'cyan'))
         print("\nType: \n(1) to use a default puzzle \n(2) to create your own \n(0) to quit\nChoice: ")
         choice = input()
         if int(choice) == 1:
-            problem = [[0, 7, 2], [4, 6, 1], [3, 5, 8]]
+            problem = [[7, 1, 2], [4, 8, 5], [6, 3, 0]]
             choice = 0
         elif int(choice) == 2:
             print("------------------------------------------------------------\n")
@@ -99,6 +101,7 @@ def generalsearch(problem, qfunct):
     nodenum = 0
     queue = 1
     max_queue = 1
+    count = 0
     #for the timestamps used here and in the goal state code block, I used:
     # https://pynative.com/python-get-time-difference/
     #and
@@ -129,7 +132,7 @@ def generalsearch(problem, qfunct):
         # https://stackoverflow.com/questions/627435/how-to-remove-an-element-from-a-list-by-index
         nodes.pop(0)
         queue -= 1
-        if goal_test(node):
+        if goal_test(node) or count == 3:
             second = datetime.now()
             time = second - first
             print('State to expand has a g(n) of ' + str(node.depth) + ', an h(n) of ' + str(node.hn) + '.\n And it looks like: \n')
@@ -171,6 +174,7 @@ def generalsearch(problem, qfunct):
             max_queue = queue
         queue += 1
         max_queue = len(nodes)
+        count+=1
 
 def expand(node, visited, qfunct):
     # global NUM_NODES
