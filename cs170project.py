@@ -18,7 +18,11 @@ from datetime import datetime
 #global variables for the goal states
 EIGHT = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
 FIFTEEN = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 0]]
-FIFTEEN = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15], [16, 17, 18, 19, 20], [21, 22, 23, 24, 0]]
+TFOUR = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15], [16, 17, 18, 19, 20], [21, 22, 23, 24, 0]]
+
+SAMPLE_EIGHT = [[1, 2, 3], [4, 5, 6], [0, 7, 8]]
+SAMPLE_FIFTEEN = [[13, 9, 7, 15], [3, 6, 8, 4], [11, 10, 2, 12], [5, 1, 14, 0]]
+SAMPLE_TFOUR = [[22, 12, 4, 2, 5], [17, 16, 3, 6, 9], [20, 19, 18, 11, 7], [23, 1, 0, 24, 13], [21, 14, 10, 8, 15]]
 
 NUM_NODES = 0
 
@@ -30,10 +34,14 @@ NUM_NODES = 0
 # I give credit to Eamonn Keogh (and if it's a real example, the person that wrote the report)
 # for the print statements and my inspiration for them in main()
 def main():
-    choice = 5
+    global SAMPLE_EIGHT
+    global SAMPLE_FIFTEEN
+    global SAMPLE_TFOUR
+    choice = 4
     problem = []
-    while int(choice) != 0:
+    while choice != 0:
         # result = pyfiglet.figlet_format("My  8\nPuzzle\nSolver", font = "doh", width = 5000)
+        print("Welcome To:")
         result = pyfiglet.figlet_format("My  8", font = "banner3-D")
         print(colored(result, 'blue'))
         result = pyfiglet.figlet_format("Puzzle", font = "banner3-D")
@@ -42,12 +50,21 @@ def main():
         print(colored(result, 'yellow'))
         result = pyfiglet.figlet_format(":-)", font = "banner3-D")
         print(colored(result, 'cyan'))
+        print("By: Brij Shah")
+    #     print(""" By: Brij Shah
+    #          ______
+    #        /|_||_\`.__
+    #       (   _    _ _/
+    #    ====`-(_)--(_)-'
+        
+    #     """)
         print("\nType: \n(1) to use a default puzzle \n(2) to create your own \n(0) to quit\nChoice: ")
         choice = input()
-        if int(choice) == 1:
-            problem = [[7, 1, 2], [4, 8, 5], [6, 3, 0]]
+        choice = int( choice )
+        if choice == 1:
+            problem = SAMPLE_EIGHT #just change this to one of the sample puzzles above for higher order puzzles
             choice = 0
-        elif int(choice) == 2:
+        elif choice == 2:
             print("------------------------------------------------------------\n")
             print("Enter your puzzle, using a zero to represent the blank.\n")
             print("Please only enter valid 8-puzzles.\n")
@@ -55,11 +72,11 @@ def main():
             print("Type RETURN only when finished with the row.\n")
             print("------------------------------------------------------------\n")
 
-            print("First Row:")
+            print("Enter the First Row:")
             firstRow = input()
-            print("Second Row:")
+            print("Enter the Second Row:")
             secondRow = input()
-            print("Third Row:")
+            print("Enter the Third Row:")
             thirdRow = input()
             list(firstRow)
             list(secondRow)
@@ -82,14 +99,15 @@ def main():
             print("Please enter a valid choice")
 
     # print(problem)
-    algNum = input("Select algorithm. \n (1) Uniform Cost Search \n (2) Misplaced Tile Heuristic \n (3) Manhattan Distance Heuristic\nChoice: ")
+    print("Select algorithm. \n (1) Uniform Cost Search \n (2) Misplaced Tile Heuristic \n (3) Manhattan Distance Heuristic\nChoice: ")
+    algNum = input()
     qfunct = int( algNum )
-    print(generalsearch(problem, qfunct))
+    generalsearch(problem, qfunct)
 
 #most of the code here was inspired by the starter code given on the first page of the pdf, but I did do some things differently
 #for instance, if we do reach a goal, we do not return node, instead we print out node's info, as I think that is more useful
 # It also seemed that in expanded, we wanted to update the node count and parent node accordingly,
-# but I couldn't figure out how to do that, so I just did it using a new children array
+# but I couldn't figure out how to do that, so I just did it using a new children array, then iterated through that
 def generalsearch(problem, qfunct):
     global NUM_NODES
     NUM_NODES = 0
@@ -101,7 +119,6 @@ def generalsearch(problem, qfunct):
     nodenum = 0
     queue = 1
     max_queue = 1
-    count = 0
     #for the timestamps used here and in the goal state code block, I used:
     # https://pynative.com/python-get-time-difference/
     #and
@@ -117,7 +134,7 @@ def generalsearch(problem, qfunct):
         #then, it creates a new resulting array based on the zipped array
         #this new array that is stored, is then separated and then now the nodes array is stored properly.
         #https://stackoverflow.com/questions/6618515/sorting-list-based-on-values-from-another-list
-        if qfunct > 1:
+        if qfunct == 2 or qfunct == 3: #not Uniform cost search
             weights = []
             for newnode in nodes:
                 weight = newnode.depth + newnode.hn
@@ -125,20 +142,23 @@ def generalsearch(problem, qfunct):
             nodes = [x for _, x in sorted(zip(weights, nodes), key=lambda pair: pair[0])]
 
         if len(nodes) == 0:
-            return "failure"
+            print("Failure\n")
+            return
         nodenum += 1
         node = nodes[0]
         # used this for some help on how to do this:
         # https://stackoverflow.com/questions/627435/how-to-remove-an-element-from-a-list-by-index
         nodes.pop(0)
         queue -= 1
-        if goal_test(node) or count == 3:
+        if goal_test(node):
             second = datetime.now()
             time = second - first
             print('State to expand has a g(n) of ' + str(node.depth) + ', an h(n) of ' + str(node.hn) + '.\n And it looks like: \n')
             drawBoard(node.problem)
             print('\nTotal number of nodes expanded: ' + str(NUM_NODES))
             print('Depth of the node in the tree was: ' + str(node.depth))
+            #https://stackoverflow.com/questions/4362491/how-do-i-check-the-difference-in-seconds-between-two-dates
+            #^Used this for the total_seconds() method
             if time.total_seconds() < 0.1:
                 diff = 'less than a tenth of a second'
             else:
@@ -147,12 +167,13 @@ def generalsearch(problem, qfunct):
                 diff = 'approximately ' + str(round(time.total_seconds(), 1)) + ' seconds'
             print('Time it took to complete was: ' + diff)
             print('Max queue size was: ' + str(max_queue) + ' nodes')
-            return "Success"
+            print("Success\n")
+            return
             # return node
         # if NUM_NODES != 0:
         print('State to expand has a g(n) of ' + str(node.depth) + ', an h(n) of ' + str(node.hn) + '.\n And it looks like: \n')
-            # print(str(node.problem))  #un comment this out if you want to print out a higher order puzzle
-            #only for 8 puzzle
+        # print(str(node.problem))  #un comment this out if you want to print out a higher order puzzle
+        #only for 8 puzzle
         drawBoard(node.problem) #comment this out if you want to print out a higher order puzzle
         expanded = expand(node, visited, qfunct)
         
@@ -164,7 +185,6 @@ def generalsearch(problem, qfunct):
                 hn = manhattan(childnode.problem)
             childnode.depth = node.depth + 1
             childnode.hn = hn
-            node.expanded += 1
             nodes.append(childnode)
             visited.append(childnode.problem)
             NUM_NODES += 1
@@ -174,7 +194,6 @@ def generalsearch(problem, qfunct):
             max_queue = queue
         queue += 1
         max_queue = len(nodes)
-        count+=1
 
 def expand(node, visited, qfunct):
     # global NUM_NODES
@@ -239,7 +258,7 @@ def expand(node, visited, qfunct):
 def find_zero(problem):
     for i in range(len(problem)):
         for j in range(len(problem)):
-            if int(problem[i][j]) == 0:
+            if problem[i][j] == 0:
                 x = i
                 y = j
     return [x, y]
@@ -291,7 +310,7 @@ def misplaced(problem):
 
     for i in range(len(problem)):
         for j in range(len(problem)):
-            if int(problem[i][j]) != int(goalstate[i][j]) and int(problem[i][j]) != 0: #realized you have to exclude 0, because it will never be in the "incorrect", it is not even a tile
+            if problem[i][j] != goalstate[i][j] and problem[i][j] != 0: #realized you have to exclude 0, because it will never be in the "incorrect", it is not even a tile
                 num_misplaced = num_misplaced + 1
     return num_misplaced
     
@@ -314,7 +333,6 @@ class Node:
         self.hn = 0
         self.depth = 0
         self.problem = problem
-        self.expanded = 0
 
 
 
@@ -322,15 +340,15 @@ class Node:
 #ONLY FOR 8 PUZZLE BECAUSE IT'S A LITTLE HARD TO DO THIS FOR BIGGER ORDER PUZZLES
 #I coded something similar to this when i did a personal project for a tic tac toe program
 #thought it would look pretty cool here as well
-#here's the link just in case: https://github.com/bshah016/CS_Projects/blob/master/TTT.py
+#here's the link to my code just in case: https://github.com/bshah016/CS_Projects/blob/master/TTT.py
 def drawBoard(problem):
     board_status = []
     for i in range(len(problem)):
         for j in range(len(problem)):
-            if int(problem[i][j]) == 0:
+            if problem[i][j] == 0:
                 board_status.append(' ')
             else:
-                board_status.append(int(problem[i][j]))
+                board_status.append(problem[i][j])
     print('\
  ╔═══╦═══╦═══╗\n\
  ║ {0} ║ {1} ║ {2} ║\n\
