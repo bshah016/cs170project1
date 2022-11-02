@@ -24,6 +24,7 @@ SAMPLE_EIGHT = [[1, 2, 3], [4, 5, 6], [0, 7, 8]]
 SAMPLE_FIFTEEN = [[13, 9, 7, 15], [3, 6, 8, 4], [11, 10, 2, 12], [5, 1, 14, 0]]
 SAMPLE_TFOUR = [[22, 12, 4, 2, 5], [17, 16, 3, 6, 9], [20, 19, 18, 11, 7], [23, 1, 0, 24, 13], [21, 14, 10, 8, 15]]
 
+#global variable for the number of nodes expanded, so we can reference it later on
 NUM_NODES = 0
 
 
@@ -39,18 +40,18 @@ def main():
     global SAMPLE_TFOUR
     choice = 4
     problem = []
-    while choice != 0:
-        # result = pyfiglet.figlet_format("My  8\nPuzzle\nSolver", font = "doh", width = 5000)
-        print("Welcome To:")
-        result = pyfiglet.figlet_format("My  8", font = "banner3-D")
-        print(colored(result, 'blue'))
-        result = pyfiglet.figlet_format("Puzzle", font = "banner3-D")
-        print(colored(result, 'green'))
-        result = pyfiglet.figlet_format("Solver", font = "banner3-D")
-        print(colored(result, 'yellow'))
-        result = pyfiglet.figlet_format(":-)", font = "banner3-D")
-        print(colored(result, 'cyan'))
-        print("By: Brij Shah")
+
+    # result = pyfiglet.figlet_format("My  8\nPuzzle\nSolver", font = "doh", width = 5000)
+    print("Welcome To:")
+    result = pyfiglet.figlet_format("My  8", font = "banner3-D")
+    print(colored(result, 'blue'))
+    result = pyfiglet.figlet_format("Puzzle", font = "banner3-D")
+    print(colored(result, 'green'))
+    result = pyfiglet.figlet_format("Solver", font = "banner3-D")
+    print(colored(result, 'yellow'))
+    result = pyfiglet.figlet_format(":-)", font = "banner3-D")
+    print(colored(result, 'cyan'))
+    print("By: Brij Shah")
     #     print(""" By: Brij Shah
     #          ______
     #        /|_||_\`.__
@@ -58,6 +59,8 @@ def main():
     #    ====`-(_)--(_)-'
         
     #     """)
+
+    while choice != 0:
         print("\nType: \n(1) to use a default puzzle \n(2) to create your own \n(0) to quit\nChoice: ")
         choice = input()
         choice = int( choice )
@@ -96,7 +99,7 @@ def main():
             # print(problem)
             choice = 0
         else:
-            print("Please enter a valid choice")
+            print("*** Please enter a valid choice!! ***")
 
     # print(problem)
     print("Select algorithm. \n (1) Uniform Cost Search \n (2) Misplaced Tile Heuristic \n (3) Manhattan Distance Heuristic\nChoice: ")
@@ -172,7 +175,7 @@ def generalsearch(problem, qfunct):
             # return node
         # if NUM_NODES != 0:
         print('State to expand has a g(n) of ' + str(node.depth) + ', an h(n) of ' + str(node.hn) + '.\n And it looks like: \n')
-        # print(str(node.problem))  #un comment this out if you want to print out a higher order puzzle
+        # print(str(node.problem))  # UN-comment this out if you want to print out a higher order puzzle
         #only for 8 puzzle
         drawBoard(node.problem) #comment this out if you want to print out a higher order puzzle
         expanded = expand(node, visited, qfunct)
@@ -181,7 +184,7 @@ def generalsearch(problem, qfunct):
             queue += 1
             if qfunct == 2:
                 hn = misplaced(childnode.problem)
-            if (qfunct == 3):
+            if qfunct == 3:
                 hn = manhattan(childnode.problem)
             childnode.depth = node.depth + 1
             childnode.hn = hn
