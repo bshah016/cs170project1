@@ -180,19 +180,27 @@ def generalsearch(problem, qfunct):
         drawBoard(node.problem) #comment this out if you want to print out a higher order puzzle
         expanded = expand(node, visited, qfunct)
         
+
+        # essentially, what this does is it checks all the possible operators that were returned from the expanded() function
+        # calculates the heuristic for each child nodes problem
+        # then adds them into the queue, as well as the visited array, so that way we can keep track of them
+        # update other neccessary values
         for childnode in expanded:
-            queue += 1
-            if qfunct == 2:
-                hn = misplaced(childnode.problem)
-            if qfunct == 3:
-                hn = manhattan(childnode.problem)
-            childnode.depth = node.depth + 1
-            childnode.hn = hn
-            nodes.append(childnode)
-            visited.append(childnode.problem)
-            NUM_NODES += 1
+            if childnode.problem not in visited: #had to add this check because I was getting some incorrect depth value for some test cases
+                queue += 1
+                hn = 0
+                if qfunct == 2:
+                    hn = misplaced(childnode.problem)
+                if qfunct == 3:
+                    hn = manhattan(childnode.problem)
+                childnode.depth = node.depth + 1
+                childnode.hn = hn
+                nodes.append(childnode)
+                visited.append(childnode.problem)
+                NUM_NODES += 1
         # else:
         #     expanded.pop(childnode)
+        #update max if we need to
         if queue > max_queue:
             max_queue = queue
         queue += 1
