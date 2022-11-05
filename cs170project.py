@@ -26,6 +26,9 @@ SAMPLE_FIFTEEN = [[0, 1, 2, 3], [5, 6, 7, 4], [9, 10, 11, 8], [13, 14, 15, 12]]
 SAMPLE_TFOUR = [[14, 5, 9, 2, 18], [8, 23, 19, 12, 17], [15, 0, 10, 20, 4], [6, 11, 21, 1, 7], [24, 3, 16, 22, 13]]
 
 
+INVALID_EIGHT = [[1, 2, 3], [4, 0, 5], [6, 8, 7]]
+
+
 PUZZLE_TYPE = ZERO
 PROBLEM = ZERO
 
@@ -366,6 +369,55 @@ def misplaced(problem):
                 num_misplaced = num_misplaced + 1
     return num_misplaced
 
+#https://math.stackexchange.com/questions/293527/how-to-check-if-a-8-puzzle-is-solvable
+def isSolvable(problem):
+    inv_count = getInversions([i for row in problem for i in row])
+    if inv_count % 2 == 0:
+        return True
+    else:
+        return False
+
+def getInversions(row): 
+    #only for 8 puzzle
+    count = 0
+    for i in range(0, 9):
+        for j in range(i + 1, 9):
+            if row[j] != 0 and row[i] != 0 and row[i] > row[j]:
+                count += 1
+    return count
+
+#https://www.quora.com/What-are-some-heuristics-to-solve-8-puzzle-problem-other-than-number-of-titles-out-of-place-and-Manhattan-distances
+# def linearconflict(problem):
+#     pass
+
+# def countlinearconflict(problem_row, solved_row):
+#     counts = [0 for x in range(size)]
+#     for i, tile_1 in enumerate(problem_row):
+#         if tile_1 in solved_row and tile_1 != 0:
+#             solved_i = solved_row.index(tile_1)
+#             for j, tile_2 in enumerate(problem_row):
+#                 if tile_2 in solved_row and tile_2 != 0 and i != j:
+#                     solved_j = solved_row.index(tile_2)
+#                     if solved_i > solved_j and i < j:
+#                         counts[i] += 1
+#                     if solved_i < solved_j and i > j:
+#                         counts[i] += 1
+#     if max(counts) == 0:
+#         return ans * 2
+#     else:
+#         i = counts.index(max(counts))
+#         candidate_row[i] = -1
+#         ans += 1
+#         return count_conflicts(candidate_row, solved_row, size, ans)
+
+
+def indices(val, goalstate):
+    for i in range(len(goalstate)):
+        for j in range(len(goalstate)):
+            if goalstate[i][j] == val:
+                return [i, j]
+    return [-1, -1]
+
 def goal_test(node):
     global PUZZLE_TYPE
     goalstate = PUZZLE_TYPE #change this depending on what type of puzzle you have
@@ -388,34 +440,39 @@ class Node:
 
 
 def printMenuEight():
-    print("------------------------------------------------------------\n")
-    print("Enter your puzzle, using a zero to represent the blank.\n")
-    print("Please only enter valid 8-puzzles.\n")
-    print("Enter the puzzle demilimiting the numbers with a space. (0 indicates the blank space)\n")
-    print("Type RETURN only when finished with the row.\n")
-    print("------------------------------------------------------------\n")
+    global INVALID_EIGHT
+    problem = INVALID_EIGHT
+    while isSolvable(problem) == False:
+        print("------------------------------------------------------------\n")
+        print("Enter your puzzle, using a zero to represent the blank.\n")
+        print("Please only enter valid 8-puzzles.\n")
+        print("Enter the puzzle demilimiting the numbers with a space. (0 indicates the blank space)\n")
+        print("Type RETURN only when finished with the row.\n")
+        print("------------------------------------------------------------\n")
 
-    print("Enter the First Row:")
-    firstRow = input()
-    print("Enter the Second Row:")
-    secondRow = input()
-    print("Enter the Third Row:")
-    thirdRow = input()
-    list(firstRow)
-    list(secondRow)
-    list(thirdRow)
-    #https://stackoverflow.com/questions/2186656/how-can-i-remove-all-instances-of-an-element-from-a-list-in-python
-    firstRow = [x for x in firstRow if x != ' ']
-    secondRow = [x for x in secondRow if x != ' ']
-    thirdRow = [x for x in thirdRow if x != ' ']
-    #not sure why I even looked it up, but I did reference it, so I'm going to put it in just in case lol
-    #https://www.geeksforgeeks.org/python-converting-all-strings-in-list-to-integers/
-    for i in range(len(firstRow)):
-        firstRow[i] = int(firstRow[i])
-        secondRow[i] = int(secondRow[i])
-        thirdRow[i] = int(thirdRow[i])
-    # print(len(firstRow))
-    problem = [firstRow, secondRow, thirdRow]
+        print("Enter the First Row:")
+        firstRow = input()
+        print("Enter the Second Row:")
+        secondRow = input()
+        print("Enter the Third Row:")
+        thirdRow = input()
+        list(firstRow)
+        list(secondRow)
+        list(thirdRow)
+        #https://stackoverflow.com/questions/2186656/how-can-i-remove-all-instances-of-an-element-from-a-list-in-python
+        firstRow = [x for x in firstRow if x != ' ']
+        secondRow = [x for x in secondRow if x != ' ']
+        thirdRow = [x for x in thirdRow if x != ' ']
+        #not sure why I even looked it up, but I did reference it, so I'm going to put it in just in case lol
+        #https://www.geeksforgeeks.org/python-converting-all-strings-in-list-to-integers/
+        for i in range(len(firstRow)):
+            firstRow[i] = int(firstRow[i])
+            secondRow[i] = int(secondRow[i])
+            thirdRow[i] = int(thirdRow[i])
+        # print(len(firstRow))
+        problem = [firstRow, secondRow, thirdRow]
+        if isSolvable(problem) == 0:
+            print('Please enter a valid 8 puzzle!!!\n')
     return problem
 
 def printMenuFift():
