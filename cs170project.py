@@ -16,13 +16,18 @@ from termcolor import colored
 from datetime import datetime
 
 #global variables for the goal states
+ZERO = []
 EIGHT = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
 FIFTEEN = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 0]]
 TFOUR = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15], [16, 17, 18, 19, 20], [21, 22, 23, 24, 0]]
 
 SAMPLE_EIGHT = [[1, 2, 3], [4, 5, 6], [0, 7, 8]]
-SAMPLE_FIFTEEN = [[13, 9, 7, 15], [3, 6, 8, 4], [11, 10, 2, 12], [5, 1, 14, 0]]
-SAMPLE_TFOUR = [[22, 12, 4, 2, 5], [17, 16, 3, 6, 9], [20, 19, 18, 11, 7], [23, 1, 0, 24, 13], [21, 14, 10, 8, 15]]
+SAMPLE_FIFTEEN = [[0, 1, 2, 3], [5, 6, 7, 4], [9, 10, 11, 8], [13, 14, 15, 12]]
+SAMPLE_TFOUR = [[14, 5, 9, 2, 18], [8, 23, 19, 12, 17], [15, 0, 10, 20, 4], [6, 11, 21, 1, 7], [24, 3, 16, 22, 13]]
+
+
+PUZZLE_TYPE = ZERO
+PROBLEM = ZERO
 
 #global variable for the number of nodes expanded, so we can reference it later on
 NUM_NODES = 0
@@ -43,7 +48,7 @@ def main():
 
     # result = pyfiglet.figlet_format("My  8\nPuzzle\nSolver", font = "doh", width = 5000)
     print("Welcome To:")
-    result = pyfiglet.figlet_format("My  8", font = "banner3-D")
+    result = pyfiglet.figlet_format("My  N", font = "banner3-D")
     print(colored(result, 'blue'))
     result = pyfiglet.figlet_format("Puzzle", font = "banner3-D")
     print(colored(result, 'green'))
@@ -61,48 +66,48 @@ def main():
     #     """)
 
     while choice != 0:
+        global PUZZLE_TYPE
+        global ZERO
+        global EIGHT
+        global FIFTEEN
+        global TFOUR
+        global PROBLEM
+        global SOLUTION
+        while PUZZLE_TYPE == ZERO:
+            print("\nType: \n(1) to use a 8 puzzle \n(2) to use a 15 puzzle \n(3) to use a 24 puzzle\nChoice: ")
+            puzzle_type = input()
+            puzzle_type = int(  puzzle_type )
+            if puzzle_type == 1:
+                PUZZLE_TYPE = EIGHT
+                PROBLEM = SAMPLE_EIGHT
+            elif puzzle_type == 2:
+                PUZZLE_TYPE = FIFTEEN
+                PROBLEM = SAMPLE_FIFTEEN
+            elif puzzle_type == 3:
+                PUZZLE_TYPE = TFOUR
+                PROBLEM = SAMPLE_TFOUR
+            else:
+                print('Please enter a valid choice\n')
+                PUZZLE_TYPE = ZERO
         print("\nType: \n(1) to use a default puzzle \n(2) to create your own \n(0) to quit\nChoice: ")
         choice = input()
         choice = int( choice )
         if choice == 1:
-            problem = SAMPLE_EIGHT #just change this to one of the sample puzzles above for higher order puzzles
+            problem = PROBLEM #just change this to one of the sample puzzles above for higher order puzzles
             choice = 0
         elif choice == 2:
-            print("------------------------------------------------------------\n")
-            print("Enter your puzzle, using a zero to represent the blank.\n")
-            print("Please only enter valid 8-puzzles.\n")
-            print("Enter the puzzle demilimiting the numbers with a space. (0 indicates the blank space)\n")
-            print("Type RETURN only when finished with the row.\n")
-            print("------------------------------------------------------------\n")
-
-            print("Enter the First Row:")
-            firstRow = input()
-            print("Enter the Second Row:")
-            secondRow = input()
-            print("Enter the Third Row:")
-            thirdRow = input()
-            list(firstRow)
-            list(secondRow)
-            list(thirdRow)
-            #https://stackoverflow.com/questions/2186656/how-can-i-remove-all-instances-of-an-element-from-a-list-in-python
-            firstRow = [x for x in firstRow if x != ' ']
-            secondRow = [x for x in secondRow if x != ' ']
-            thirdRow = [x for x in thirdRow if x != ' ']
-            #not sure why I even looked it up, but I did reference it, so I'm going to put it in just in case lol
-            #https://www.geeksforgeeks.org/python-converting-all-strings-in-list-to-integers/
-            for i in range(len(firstRow)):
-                firstRow[i] = int(firstRow[i])
-                secondRow[i] = int(secondRow[i])
-                thirdRow[i] = int(thirdRow[i])
-            # print(len(firstRow))
-            problem = [firstRow, secondRow, thirdRow]
-            # print(problem)
+            if PUZZLE_TYPE == EIGHT:
+                problem = printMenuEight()
+            elif PUZZLE_TYPE == FIFTEEN:
+                problem = printMenuFift()
+            elif PUZZLE_TYPE == TFOUR:
+                problem = printMenuTf()
             choice = 0
         else:
             print("*** Please enter a valid choice!! ***")
 
     # print(problem)
-    print("Select algorithm. \n (1) Uniform Cost Search \n (2) Misplaced Tile Heuristic \n (3) Manhattan Distance Heuristic\nChoice: ")
+    print("Select algorithm. \n (1) Uniform Cost Search \n (2) Misplaced Tile Heuristic \n (3) Manhattan Distance Heuristic\n (4) Linear Conflict\nChoice: ")
     algNum = input()
     qfunct = int( algNum )
     generalsearch(problem, qfunct)
@@ -113,6 +118,7 @@ def main():
 # but I couldn't figure out how to do that, so I just did it using a new children array, then iterated through that
 def generalsearch(problem, qfunct):
     global NUM_NODES
+    global PUZZLE_TYPE
     NUM_NODES = 0
     hn = 0
 
@@ -157,7 +163,12 @@ def generalsearch(problem, qfunct):
             second = datetime.now()
             time = second - first
             print('State to expand has a g(n) of ' + str(node.depth) + ', an h(n) of ' + str(node.hn) + '.\n And it looks like: \n')
-            drawBoard(node.problem)
+            if PUZZLE_TYPE == EIGHT:
+                drawBoardEight(node.problem)
+            elif PUZZLE_TYPE == FIFTEEN:
+                drawBoardFift(node.problem)
+            elif PUZZLE_TYPE == TFOUR:
+                drawBoardTf(node.problem) #!!!
             print('\nTotal number of nodes expanded: ' + str(NUM_NODES))
             print('Depth of the node in the tree was: ' + str(node.depth))
             #https://stackoverflow.com/questions/4362491/how-do-i-check-the-difference-in-seconds-between-two-dates
@@ -177,7 +188,12 @@ def generalsearch(problem, qfunct):
         print('State to expand has a g(n) of ' + str(node.depth) + ', an h(n) of ' + str(node.hn) + '.\n And it looks like: \n')
         # print(str(node.problem))  # UN-comment this out if you want to print out a higher order puzzle
         #only for 8 puzzle
-        drawBoard(node.problem) #comment this out if you want to print out a higher order puzzle
+        if PUZZLE_TYPE == EIGHT:
+            drawBoardEight(node.problem)
+        elif PUZZLE_TYPE == FIFTEEN:
+            drawBoardFift(node.problem)
+        elif PUZZLE_TYPE == TFOUR:
+            drawBoardTf(node.problem) #!!!!
         expanded = expand(node, visited, qfunct)
         
 
@@ -287,8 +303,8 @@ def remove_front(pq):
     return x
 
 def manhattan(problem):
-    global EIGHT
-    goalstate = EIGHT #choose your goal state from the global variables
+    global PUZZLE_TYPE
+    goalstate = PUZZLE_TYPE #choose your goal state from the global variables
     manhattandist = 0
     x = 0
     y = 0
@@ -299,24 +315,49 @@ def manhattan(problem):
     #calculating current position for each value, then retrieving goal state's value
     #using the formula from the link, adds the abs value of actual - expected for each x and y coordinate
     #re sums that into the manhattan distance calculation
-    
-    for a in range(1, 9): #have to change this range if you change the type of puzzle. For 15 puzzle, would have to be 1 to 16, for 24 puzzle, would have to be 1 to 25, etc
-        for i in range(len(problem)):
-            for j in range(len(problem)):
-                if problem[i][j] == a:
-                    x = i
-                    y = j
-                if goalstate[i][j] == a:
-                    goal_x = i
-                    goal_y = j
+    if PUZZLE_TYPE == EIGHT:
+        for a in range(1, 9): #have to change this range if you change the type of puzzle. For 15 puzzle, would have to be 1 to 16, for 24 puzzle, would have to be 1 to 25, etc
+            for i in range(len(problem)):
+                for j in range(len(problem)):
+                    if problem[i][j] == a:
+                        x = i
+                        y = j
+                    if goalstate[i][j] == a:
+                        goal_x = i
+                        goal_y = j
 
-        manhattandist = manhattandist + abs(x - goal_x) + abs(y - goal_y)
+            manhattandist = manhattandist + abs(x - goal_x) + abs(y - goal_y)
+    elif PUZZLE_TYPE == FIFTEEN:
+        for a in range(1, 16): #have to change this range if you change the type of puzzle. For 15 puzzle, would have to be 1 to 16, for 24 puzzle, would have to be 1 to 25, etc
+            for i in range(len(problem)):
+                for j in range(len(problem)):
+                    if problem[i][j] == a:
+                        x = i
+                        y = j
+                    if goalstate[i][j] == a:
+                        goal_x = i
+                        goal_y = j
+
+            manhattandist = manhattandist + abs(x - goal_x) + abs(y - goal_y)
+    elif PUZZLE_TYPE == TFOUR:
+        for a in range(1, 25): #have to change this range if you change the type of puzzle. For 15 puzzle, would have to be 1 to 16, for 24 puzzle, would have to be 1 to 25, etc
+            for i in range(len(problem)):
+                for j in range(len(problem)):
+                    if problem[i][j] == a:
+                        x = i
+                        y = j
+                    if goalstate[i][j] == a:
+                        goal_x = i
+                        goal_y = j
+
+            manhattandist = manhattandist + abs(x - goal_x) + abs(y - goal_y)
+    
     return manhattandist
 
 
 def misplaced(problem):
-    global EIGHT
-    goalstate = EIGHT #choose your goal state from the global variables
+    global PUZZLE_TYPE
+    goalstate = PUZZLE_TYPE #choose your goal state from the global variables
     num_misplaced = 0
 
     for i in range(len(problem)):
@@ -324,11 +365,10 @@ def misplaced(problem):
             if problem[i][j] != goalstate[i][j] and problem[i][j] != 0: #realized you have to exclude 0, because it will never be in the "incorrect", it is not even a tile
                 num_misplaced = num_misplaced + 1
     return num_misplaced
-    
 
 def goal_test(node):
-    global EIGHT
-    goalstate = EIGHT #change this depending on what type of puzzle you have
+    global PUZZLE_TYPE
+    goalstate = PUZZLE_TYPE #change this depending on what type of puzzle you have
     # for row in range(len(node.problem)):
     #     if collections.Counter(node.problem[row]) != collections.Counter(goalstate[row]):
     #         return False
@@ -347,12 +387,123 @@ class Node:
 
 
 
+def printMenuEight():
+    print("------------------------------------------------------------\n")
+    print("Enter your puzzle, using a zero to represent the blank.\n")
+    print("Please only enter valid 8-puzzles.\n")
+    print("Enter the puzzle demilimiting the numbers with a space. (0 indicates the blank space)\n")
+    print("Type RETURN only when finished with the row.\n")
+    print("------------------------------------------------------------\n")
+
+    print("Enter the First Row:")
+    firstRow = input()
+    print("Enter the Second Row:")
+    secondRow = input()
+    print("Enter the Third Row:")
+    thirdRow = input()
+    list(firstRow)
+    list(secondRow)
+    list(thirdRow)
+    #https://stackoverflow.com/questions/2186656/how-can-i-remove-all-instances-of-an-element-from-a-list-in-python
+    firstRow = [x for x in firstRow if x != ' ']
+    secondRow = [x for x in secondRow if x != ' ']
+    thirdRow = [x for x in thirdRow if x != ' ']
+    #not sure why I even looked it up, but I did reference it, so I'm going to put it in just in case lol
+    #https://www.geeksforgeeks.org/python-converting-all-strings-in-list-to-integers/
+    for i in range(len(firstRow)):
+        firstRow[i] = int(firstRow[i])
+        secondRow[i] = int(secondRow[i])
+        thirdRow[i] = int(thirdRow[i])
+    # print(len(firstRow))
+    problem = [firstRow, secondRow, thirdRow]
+    return problem
+
+def printMenuFift():
+    print("------------------------------------------------------------\n")
+    print("Enter your puzzle, using a zero to represent the blank.\n")
+    print("Please only enter valid 15-puzzles.\n")
+    print("Enter the puzzle demilimiting the numbers with a space. (0 indicates the blank space)\n")
+    print("Type RETURN only when finished with the row.\n")
+    print("------------------------------------------------------------\n")
+
+    print("Enter the First Row:")
+    firstRow = input()
+    print("Enter the Second Row:")
+    secondRow = input()
+    print("Enter the Third Row:")
+    thirdRow = input()
+    print("Enter the Fourth Row:")
+    fourthRow = input()
+    list(firstRow)
+    list(secondRow)
+    list(thirdRow)
+    list(fourthRow)
+    #https://stackoverflow.com/questions/2186656/how-can-i-remove-all-instances-of-an-element-from-a-list-in-python
+    firstRow = [x for x in firstRow if x != ' ']
+    secondRow = [x for x in secondRow if x != ' ']
+    thirdRow = [x for x in thirdRow if x != ' ']
+    fourthRow = [x for x in fourthRow if x != ' ']
+    #not sure why I even looked it up, but I did reference it, so I'm going to put it in just in case lol
+    #https://www.geeksforgeeks.org/python-converting-all-strings-in-list-to-integers/
+    for i in range(len(firstRow)):
+        firstRow[i] = int(firstRow[i])
+        secondRow[i] = int(secondRow[i])
+        thirdRow[i] = int(thirdRow[i])
+        fourthRow[i] = int(fourthRow[i])
+    # print(len(firstRow))
+    problem = [firstRow, secondRow, thirdRow, fourthRow]
+    return problem
+
+
+def printMenuTf():
+    print("------------------------------------------------------------\n")
+    print("Enter your puzzle, using a zero to represent the blank.\n")
+    print("Please only enter valid 24-puzzles.\n")
+    print("Enter the puzzle demilimiting the numbers with a space. (0 indicates the blank space)\n")
+    print("Type RETURN only when finished with the row.\n")
+    print("------------------------------------------------------------\n")
+
+    print("Enter the First Row:")
+    firstRow = input()
+    print("Enter the Second Row:")
+    secondRow = input()
+    print("Enter the Third Row:")
+    thirdRow = input()
+    print("Enter the Fourth Row:")
+    fourthRow = input()
+    print("Enter the Fifth Row:")
+    fifthRow = input()
+    list(firstRow)
+    list(secondRow)
+    list(thirdRow)
+    list(fourthRow)
+    list(fifthRow)
+    #https://stackoverflow.com/questions/2186656/how-can-i-remove-all-instances-of-an-element-from-a-list-in-python
+    firstRow = [x for x in firstRow if x != ' ']
+    secondRow = [x for x in secondRow if x != ' ']
+    thirdRow = [x for x in thirdRow if x != ' ']
+    fourthRow = [x for x in fourthRow if x != ' ']
+    fifthRow = [x for x in fifthRow if x != ' ']
+    #not sure why I even looked it up, but I did reference it, so I'm going to put it in just in case lol
+    #https://www.geeksforgeeks.org/python-converting-all-strings-in-list-to-integers/
+    for i in range(len(firstRow)):
+        firstRow[i] = int(firstRow[i])
+        secondRow[i] = int(secondRow[i])
+        thirdRow[i] = int(thirdRow[i])
+        fourthRow[i] = int(fourthRow[i])
+        fifthRow[i] = int(fifthRow[i])
+    # print(len(firstRow))
+    problem = [firstRow, secondRow, thirdRow, fourthRow, fifthRow]
+    return problem
+
+
+
 #Just something to make it look nicer :)
 #ONLY FOR 8 PUZZLE BECAUSE IT'S A LITTLE HARD TO DO THIS FOR BIGGER ORDER PUZZLES
 #I coded something similar to this when i did a personal project for a tic tac toe program
 #thought it would look pretty cool here as well
 #here's the link to my code just in case: https://github.com/bshah016/CS_Projects/blob/master/TTT.py
-def drawBoard(problem):
+def drawBoardEight(problem):
     board_status = []
     for i in range(len(problem)):
         for j in range(len(problem)):
@@ -372,9 +523,62 @@ def drawBoard(problem):
                board_status[3], board_status[4], board_status[5], 
                board_status[6], board_status[7], board_status[8]))
 
+def drawBoardFift(problem):
+    board_status = []
+    for i in range(len(problem)):
+        for j in range(len(problem)):
+            if problem[i][j] == 0:
+                board_status.append('  ')
+            else:
+                if problem[i][j] < 10:
+                    board_status.append(str(problem[i][j]) + ' ')
+                else:
+                    board_status.append(problem[i][j])
+    print('\
+ ╔════╦════╦════╦════╗\t\n\
+ ║ {0} ║ {1} ║ {2} ║ {3} ║\t\n\
+ ╠════╬════╬════╬════╣\t\n\
+ ║ {4} ║ {5} ║ {6} ║ {7} ║\t\n\
+ ╠════╬════╬════╬════╣\t\n\
+ ║ {8} ║ {9} ║ {10} ║ {11} ║\t\n\
+ ╠════╬════╬════╬════╣\t\n\
+ ║ {12} ║ {13} ║ {14} ║ {15} ║\t\n\
+ ╚════╩════╩════╩════╝ \t'.format(
+               board_status[0], board_status[1], board_status[2], board_status[3],
+               board_status[4], board_status[5], board_status[6], board_status[7],
+               board_status[8], board_status[9], board_status[10], board_status[11],
+               board_status[12], board_status[13], board_status[14], board_status[15]))
+
+
+def drawBoardTf(problem):
+    board_status = []
+    for i in range(len(problem)):
+        for j in range(len(problem)):
+            if problem[i][j] == 0:
+                board_status.append('  ')
+            else:
+                if problem[i][j] < 10:
+                    board_status.append(str(problem[i][j]) + ' ')
+                else:
+                    board_status.append(problem[i][j])
+    print('\
+ ╔════╦════╦════╦════╦════╗\t\n\
+ ║ {0} ║ {1} ║ {2} ║ {3} ║ {4} ║\t\n\
+ ╠════╬════╬════╬════╬════╣\t\n\
+ ║ {5} ║ {6} ║ {7} ║ {8} ║ {9} ║\t\n\
+ ╠════╬════╬════╬════╬════╣\t\n\
+ ║ {10} ║ {11} ║ {12} ║ {13} ║ {14} ║\t\n\
+ ╠════╬════╬════╬════╬════╣\t\n\
+ ║ {15} ║ {16} ║ {17} ║ {18} ║ {19} ║\t\n\
+ ╠════╬════╬════╬════╬════╣\t\n\
+ ║ {20} ║ {21} ║ {22} ║ {23} ║ {24} ║\t\n\
+ ╚════╩════╩════╩════╩════╝ \t'.format(
+               board_status[0], board_status[1], board_status[2], board_status[3], board_status[4],
+               board_status[5], board_status[6], board_status[7], board_status[8], board_status[9],
+               board_status[10], board_status[11], board_status[12], board_status[13], board_status[14],
+               board_status[15], board_status[16], board_status[17], board_status[18], board_status[19],
+               board_status[20], board_status[21], board_status[22], board_status[23], board_status[24],))
+
 
 
 main()
-
-
-    
